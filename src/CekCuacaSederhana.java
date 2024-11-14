@@ -1,20 +1,68 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import javax.swing.table.DefaultTableModel;
+import org.json.JSONObject;
 
-/**
- *
- * @author acer
- */
 public class CekCuacaSederhana extends javax.swing.JFrame {
 
-    /**
-     * Creates new form CekCuacaSederhana
-     */
+    private final String API_KEY = "a8bf13ef8f8d65f2bb43efc4aa2ee466"; // Ganti dengan API key Anda
+    private final String BASE_URL = "https://api.openweathermap.org/data/2.5/weather";
+    
     public CekCuacaSederhana() {
         initComponents();
+        jTable1.setModel(new DefaultTableModel(
+        new Object[][]{},
+        new String[]{"Tanggal", "Kota", "Suhu (°C)", "Kondisi", "Kelembapan (%)"}
+        ));
     }
+     private void cekCuaca(String city) {
+        try {
+        String urlString = BASE_URL + "?q=" + city + "&appid=" + API_KEY + "&units=metric";
+        URL url = new URL(urlString);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("GET");
+        int responseCode = conn.getResponseCode();
+
+        if (responseCode == HttpURLConnection.HTTP_OK) {
+            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            String inputLine;
+            StringBuilder response = new StringBuilder();
+
+            while ((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
+            }
+            in.close();
+            
+            parseJSON(response.toString());
+        } else {
+            System.out.println("GET request failed. Error code: " + responseCode);
+        }
+            } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void parseJSON(String responseBody) {
+    JSONObject obj = new JSONObject(responseBody);
+    
+    // Mengambil data dari JSON
+    String cityName = obj.getString("name");
+    double temperature = obj.getJSONObject("main").getDouble("temp");
+    String weatherDescription = obj.getJSONArray("weather").getJSONObject(0).getString("description");
+    int humidity = obj.getJSONObject("main").getInt("humidity");
+
+    // Konversi Unix Timestamp ke Tanggal
+    long timestamp = obj.getLong("dt");
+    java.util.Date date = new java.util.Date(timestamp * 1000);
+    java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    String formattedDate = sdf.format(date);
+
+    // Tambahkan data ke tabel
+    DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
+    model.addRow(new Object[]{formattedDate, cityName, temperature, weatherDescription, humidity});
+}
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -46,8 +94,18 @@ public class CekCuacaSederhana extends javax.swing.JFrame {
         jLabel2.setText("Pilih Kota :");
 
         jButton1.setText("Cek Cuaca");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
 
         jButton2.setText("Simpan Ke Favorit");
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
 
         jLabel3.setText("Kota Favorit :");
 
@@ -138,6 +196,43 @@ public class CekCuacaSederhana extends javax.swing.JFrame {
     private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_jComboBox1ActionPerformed
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+       String city = jTextField1.getText();
+    if (!city.isEmpty()) {
+        cekCuaca(city);
+    } else {
+        System.out.println("Please enter a city name.");
+    }
+    }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+           simpanKeFavorit(evt);
+    }                                        
+    
+        private void simpanKeFavorit(java.awt.event.ActionEvent evt) {
+    String city = jTextField1.getText();
+    if (!city.isEmpty()) {
+        // Cek apakah kota sudah ada di dalam ComboBox
+        boolean isCityExist = false;
+        for (int i = 0; i < jComboBox1.getItemCount(); i++) {
+            if (jComboBox1.getItemAt(i).equalsIgnoreCase(city)) {
+                isCityExist = true;
+                break;
+            }
+        }
+        // Jika kota belum ada di dalam ComboBox, tambahkan ke dalam daftar favorit
+        if (!isCityExist) {
+            jComboBox1.addItem(city);
+            System.out.println("Kota " + city + " ditambahkan ke favorit.");
+        } else {
+            System.out.println("Kota " + city + " sudah ada di favorit.");
+        }
+    } else {
+        System.out.println("Masukkan nama kota untuk disimpan ke favorit.");
+    }
+        
+    }//GEN-LAST:event_jButton2ActionPerformed
 
     /**
      * @param args the command line arguments
