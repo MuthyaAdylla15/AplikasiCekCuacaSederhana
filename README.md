@@ -42,4 +42,4 @@ Penanganan IOException dan JSONException untuk menangani kesalahan saat mengambi
 9. Klik tombol "KELUAR" untuk menutup aplikasi.
 
 # Demo
-![App Screenshot](img/Cek Cuaca.png)
+![App Screenshot](img/Simpan.png)
